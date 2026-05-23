@@ -1212,7 +1212,7 @@ async function createOrder(event) {
     toast("Add at least one product to the order.");
     return;
   }
-  if (order.order_status === "Shipped" && (!order.tracking_id || !order.tracking_link)) {
+  if (order.order_status === "Shipped" && (!order.tracking_id) {
     toast("Tracking ID and link are required for shipped orders.");
     return;
   }
@@ -1255,7 +1255,7 @@ function blankOrder() {
 async function updateOrder(event) {
   event.preventDefault();
   const data = formObject(event.currentTarget);
-  if (data.order_status === "Shipped" && (!data.tracking_id || !data.tracking_link)) {
+  if (data.order_status === "Shipped" && (!data.tracking_id) {
     toast("Tracking ID and link are required before marking shipped.");
     return;
   }
