@@ -294,7 +294,6 @@ function loginView() {
             <label for="pin">Role PIN</label>
             <input id="pin" name="pin" type="password" inputmode="numeric" required placeholder="Enter PIN" />
           </div>
-          <p class="muted">Default demo PINs are Admin 1234 and Team 5678. Change them in config.js before sharing.</p>
           <button class="btn primary" type="submit">Sign in</button>
         </form>
       </section>
