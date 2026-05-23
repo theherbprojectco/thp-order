@@ -1,12 +1,12 @@
-const CACHE_NAME = "orderflow-cache-v5";
+const CACHE_NAME = "orderflow-cache-v8";
 const ASSETS = [
   "./",
   "./index.html",
-  "./config.js?v=5",
-  "./styles.css?v=5",
-  "./app.js?v=5",
-  "./manifest.webmanifest?v=5",
-  "./icon.svg?v=5",
+  "./config.js?v=8",
+  "./styles.css?v=8",
+  "./app.js?v=8",
+  "./manifest.webmanifest?v=8",
+  "./icon.svg?v=8",
 ];
 
 self.addEventListener("install", (event) => {
