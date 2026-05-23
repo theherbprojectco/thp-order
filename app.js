@@ -3,12 +3,12 @@ const config = window.ORDERFLOW_CONFIG || {};
 const API_URL = (config.apiUrl || "").trim();
 const today = new Date().toISOString().slice(0, 10);
 
-const statuses = ["New", "Confirmed", "Shipped", "Delivered", "Cancelled", "Returned"];
-const paymentStatuses = ["Paid", "Pending", "COD"];
+const statuses = ["New", "Confirmed", "Packed", "Shipped", "Delivered", "Cancelled", "Returned"];
+const paymentStatuses = ["Paid", "Pending", "Partial", "COD"];
 const paymentMethods = ["UPI", "COD", "Bank Transfer", "Other"];
 const sources = ["Instagram", "WhatsApp", "Website", "Referral", "Other"];
 const orderTypes = ["Customer", "Influencer PR", "Collaboration", "Gifted", "Internal Sample"];
-const platforms = ["Instagram", "YouTube", "Other"];
+const platforms = ["Instagram", "YouTube", "TikTok", "Other"];
 const collabTypes = ["Gifted", "Paid collaboration", "Affiliate", "Barter"];
 const deliverables = ["Reel", "Story", "Post", "Review", "UGC content"];
 const expenseTypes = ["Raw Material", "Shipping", "Ad Marketing", "Packaging", "Tools", "Other"];
@@ -281,7 +281,7 @@ function loginView() {
         <form id="loginForm" class="grid" style="margin-top: 18px">
           <div class="field">
             <label for="name">Name</label>
-            <input id="name" name="name" required value="Raunak" />
+            <input id="name" name="name" required value="Swathi" />
           </div>
           <div class="field">
             <label for="role">Role</label>
@@ -769,20 +769,17 @@ function productNames() {
 
 function productOptions() {
   const sourceProducts = (state.products || []).length ? state.products : seedProducts();
-  const fromProducts = sourceProducts
+  const byName = new Map();
+  sourceProducts
     .filter((product) => String(product.active || "Yes").toLowerCase() !== "no")
     .map((product) => ({
       name: product.product_name || product.name || product.product,
       price: product.price || product.amount || "",
     }))
-    .filter((product) => product.name);
-  const fromOrders = state.orders
-    .map((order) => ({ name: order.product, price: "" }))
-    .filter((product) => product.name);
-  const byName = new Map();
-  [...fromProducts, ...fromOrders].forEach((product) => {
-    if (!byName.has(product.name)) byName.set(product.name, product);
-  });
+    .filter((product) => product.name)
+    .forEach((product) => {
+      if (!byName.has(product.name)) byName.set(product.name, product);
+    });
   return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -1212,7 +1209,7 @@ async function createOrder(event) {
     toast("Add at least one product to the order.");
     return;
   }
-  if (order.order_status === "Shipped" && (!order.tracking_id)) {
+  if (order.order_status === "Shipped" && (!order.tracking_id || !order.tracking_link)) {
     toast("Tracking ID and link are required for shipped orders.");
     return;
   }
@@ -1255,7 +1252,7 @@ function blankOrder() {
 async function updateOrder(event) {
   event.preventDefault();
   const data = formObject(event.currentTarget);
-  if (data.order_status === "Shipped" && (!data.tracking_id)) {
+  if (data.order_status === "Shipped" && (!data.tracking_id || !data.tracking_link)) {
     toast("Tracking ID and link are required before marking shipped.");
     return;
   }
