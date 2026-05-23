@@ -3,12 +3,12 @@ const config = window.ORDERFLOW_CONFIG || {};
 const API_URL = (config.apiUrl || "").trim();
 const today = new Date().toISOString().slice(0, 10);
 
-const statuses = ["New", "Confirmed", "Packed", "Shipped", "Delivered", "Cancelled", "Returned"];
-const paymentStatuses = ["Paid", "Pending", "Partial", "COD"];
+const statuses = ["New", "Confirmed", "Shipped", "Delivered", "Cancelled", "Returned"];
+const paymentStatuses = ["Paid", "Pending", "COD"];
 const paymentMethods = ["UPI", "COD", "Bank Transfer", "Other"];
 const sources = ["Instagram", "WhatsApp", "Website", "Referral", "Other"];
 const orderTypes = ["Customer", "Influencer PR", "Collaboration", "Gifted", "Internal Sample"];
-const platforms = ["Instagram", "YouTube", "TikTok", "Other"];
+const platforms = ["Instagram", "YouTube", "Other"];
 const collabTypes = ["Gifted", "Paid collaboration", "Affiliate", "Barter"];
 const deliverables = ["Reel", "Story", "Post", "Review", "UGC content"];
 const expenseTypes = ["Raw Material", "Shipping", "Ad Marketing", "Packaging", "Tools", "Other"];
