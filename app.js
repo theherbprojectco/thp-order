@@ -1212,7 +1212,7 @@ async function createOrder(event) {
     toast("Add at least one product to the order.");
     return;
   }
-  if (order.order_status === "Shipped" && (!order.tracking_id) {
+  if (order.order_status === "Shipped" && (!order.tracking_id)) {
     toast("Tracking ID and link are required for shipped orders.");
     return;
   }
