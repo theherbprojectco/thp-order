@@ -294,6 +294,7 @@ function loginView() {
             <label for="pin">Role PIN</label>
             <input id="pin" name="pin" type="password" inputmode="numeric" required placeholder="Enter PIN" />
           </div>
+          <p class="muted">Default demo PINs are Admin 1234 and Team 5678. Change them in config.js before sharing.</p>
           <button class="btn primary" type="submit">Sign in</button>
         </form>
       </section>
@@ -641,11 +642,11 @@ function updateForm(order) {
   `;
 }
 
-function textFieldRaw(name, labelText, value = "", required = false) {
+function textFieldRaw(name, labelText, value = "", required = false, readonly = false) {
   return `
     <div class="field">
       <label for="${name}">${labelText}</label>
-      <input id="${name}" name="${name}" value="${value || ""}" ${required ? "required" : ""} />
+      <input id="${name}" name="${name}" value="${value || ""}" ${required ? "required" : ""} ${readonly ? "readonly" : ""} />
     </div>
   `;
 }
@@ -677,7 +678,7 @@ function addOrderView() {
       <div class="panel-head"><h2>Order details</h2></div>
       <div class="panel-body">
         <form id="orderForm" class="form-grid">
-          ${textFieldRaw("order_id", "Order ID", nextId, true)}
+          ${textFieldRaw("order_id", "Order ID", nextId, true, true)}
           ${dateFieldRaw("order_date", "Order date", today)}
           ${selectFieldRaw("order_type", "Order type", orderTypes, "Customer")}
           ${textFieldRaw("customer_name", "Customer name", "", true)}
@@ -687,9 +688,7 @@ function addOrderView() {
           ${textFieldRaw("city", "City", "", true)}
           ${textFieldRaw("state", "State", "", true)}
           ${textFieldRaw("pincode", "Pincode", "", true)}
-          ${productFieldRaw("", true)}
-          ${textFieldRaw("quantity", "Quantity", "1", true)}
-          ${textFieldRaw("amount", "Order amount", "0", true)}
+          ${multiProductFieldRaw()}
           ${selectFieldRaw("payment_method", "Payment method", paymentMethods, "UPI")}
           ${selectFieldRaw("payment_status", "Payment status", paymentStatuses, "Paid")}
           ${selectFieldRaw("order_source", "Order source", sources, "Instagram")}
@@ -719,19 +718,88 @@ function addOrderView() {
   `;
 }
 
-function productFieldRaw(current = "", required = false) {
-  const products = productNames();
-  if (!products.length) return textFieldRaw("product", "Product ordered", current, required);
-  return selectFieldRaw("product", "Product ordered", ["", ...products], current, required);
+function multiProductFieldRaw() {
+  const products = productOptions();
+  if (!products.length) {
+    return `
+      ${textFieldRaw("product", "Product ordered", "", true)}
+      ${textFieldRaw("quantity", "Quantity", "1", true)}
+      ${textFieldRaw("amount", "Order amount", "0", true)}
+    `;
+  }
+  return `
+    <div class="panel full product-picker" style="box-shadow:none">
+      <div class="panel-head"><h2>Products ordered</h2></div>
+      <div class="panel-body grid">
+        <div class="product-add-row">
+          ${productFieldRaw()}
+          <div class="field">
+            <label for="productQty">Qty</label>
+            <input id="productQty" type="number" min="1" step="1" value="1" />
+          </div>
+          <button class="btn" data-action="addProductLine" type="button">Add product</button>
+        </div>
+        <div id="selectedProducts" class="selected-products">
+          <p class="muted">No products selected yet.</p>
+        </div>
+        <input id="product" name="product" type="hidden" required />
+        <input id="quantity" name="quantity" type="hidden" value="0" required />
+        <div class="field">
+          <label for="amount">Order amount</label>
+          <input id="amount" name="amount" value="0" required />
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function productFieldRaw(current = "") {
+  const products = productOptions();
+  if (!products.length) return textFieldRaw("productPicker", "Product ordered", current, true);
+  return `
+    <div class="field">
+      <label for="productPicker">Product ordered</label>
+      <select id="productPicker">
+        <option value="">Select product</option>
+        ${products
+          .map(
+            (product) =>
+              `<option value="${escapeHtml(product.name)}" data-price="${escapeHtml(product.price)}" ${product.name === current ? "selected" : ""}>${escapeHtml(product.name)}</option>`
+          )
+          .join("")}
+      </select>
+    </div>
+  `;
 }
 
 function productNames() {
+  return productOptions().map((product) => product.name);
+}
+
+function productOptions() {
   const fromProducts = (state.products || [])
     .filter((product) => String(product.active || "Yes").toLowerCase() !== "no")
-    .map((product) => product.product_name || product.name || product.product)
-    .filter(Boolean);
-  const fromOrders = state.orders.map((order) => order.product).filter(Boolean);
-  return [...new Set([...fromProducts, ...fromOrders])].sort();
+    .map((product) => ({
+      name: product.product_name || product.name || product.product,
+      price: product.price || product.amount || "",
+    }))
+    .filter((product) => product.name);
+  const fromOrders = state.orders
+    .map((order) => ({ name: order.product, price: "" }))
+    .filter((product) => product.name);
+  const byName = new Map();
+  [...fromProducts, ...fromOrders].forEach((product) => {
+    if (!byName.has(product.name)) byName.set(product.name, product);
+  });
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 function nextOrderId() {
@@ -856,7 +924,7 @@ function expensesView() {
         <div class="panel-head"><h2>Add expense</h2></div>
         <div class="panel-body">
           <form id="expenseForm" class="form-grid">
-            ${textFieldRaw("expense_id", "Expense ID", nextExpenseId(), true)}
+            ${textFieldRaw("expense_id", "Expense ID", nextExpenseId(), true, true)}
             ${dateFieldRaw("expense_date", "Date", today)}
             ${selectFieldRaw("expense_type", "Type", expenseTypes, "Shipping", true)}
             ${textFieldRaw("amount", "Amount paid", "", true)}
@@ -1022,6 +1090,8 @@ function bindPage() {
     render();
   });
   document.getElementById("orderForm")?.addEventListener("submit", createOrder);
+  document.querySelector('[data-action="addProductLine"]')?.addEventListener("click", addProductLine);
+  document.getElementById("selectedProducts")?.addEventListener("click", removeProductLine);
   document.getElementById("expenseForm")?.addEventListener("submit", createExpense);
   document.getElementById("updateForm")?.addEventListener("submit", updateOrder);
   document.querySelector('[data-action="markShipped"]')?.addEventListener("click", markShipped);
@@ -1052,8 +1122,91 @@ function formObject(form) {
   return Object.fromEntries(new FormData(form).entries());
 }
 
+function selectedOrderItems() {
+  const raw = document.getElementById("productItems")?.value || "[]";
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+function setSelectedOrderItems(items) {
+  const existing = document.getElementById("productItems");
+  if (existing) {
+    existing.value = JSON.stringify(items);
+    return;
+  }
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.id = "productItems";
+  input.value = JSON.stringify(items);
+  document.getElementById("orderForm")?.appendChild(input);
+}
+
+function addProductLine() {
+  const picker = document.getElementById("productPicker");
+  const qtyInput = document.getElementById("productQty");
+  if (!picker || !qtyInput) return;
+  const option = picker.selectedOptions[0];
+  const name = picker.value;
+  const qty = Math.max(1, Number(qtyInput.value || 1));
+  const price = Number(option?.dataset.price || 0);
+  if (!name) {
+    toast("Select a product first.");
+    return;
+  }
+  const items = selectedOrderItems();
+  const existing = items.find((item) => item.name === name);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    items.push({ name, qty, price });
+  }
+  setSelectedOrderItems(items);
+  picker.value = "";
+  qtyInput.value = "1";
+  renderSelectedProducts();
+}
+
+function removeProductLine(event) {
+  const button = event.target.closest("[data-remove-product]");
+  if (!button) return;
+  const items = selectedOrderItems().filter((item) => item.name !== button.dataset.removeProduct);
+  setSelectedOrderItems(items);
+  renderSelectedProducts();
+}
+
+function renderSelectedProducts() {
+  const items = selectedOrderItems();
+  const list = document.getElementById("selectedProducts");
+  const productInput = document.getElementById("product");
+  const quantityInput = document.getElementById("quantity");
+  const amountInput = document.getElementById("amount");
+  if (!list || !productInput || !quantityInput || !amountInput) return;
+  const totalQty = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+  const totalAmount = items.reduce((sum, item) => sum + Number(item.qty || 0) * Number(item.price || 0), 0);
+  productInput.value = items.map((item) => `${item.name} x ${item.qty}`).join("; ");
+  quantityInput.value = totalQty;
+  amountInput.value = String(totalAmount);
+  list.innerHTML = items.length
+    ? items
+        .map(
+          (item) => `
+            <div class="product-line">
+              <span><strong>${escapeHtml(item.name)}</strong> x ${item.qty}</span>
+              <span>${money(Number(item.qty || 0) * Number(item.price || 0))}</span>
+              <button class="btn icon" data-remove-product="${escapeHtml(item.name)}" type="button" aria-label="Remove ${escapeHtml(item.name)}">×</button>
+            </div>
+          `
+        )
+        .join("")
+    : `<p class="muted">No products selected yet.</p>`;
+}
+
 async function createOrder(event) {
   event.preventDefault();
+  renderSelectedProducts();
   const order = {
     ...blankOrder(),
     ...formObject(event.currentTarget),
@@ -1061,6 +1214,10 @@ async function createOrder(event) {
     updated_by: state.user.name,
     last_updated: today,
   };
+  if (!order.product || Number(order.quantity || 0) <= 0) {
+    toast("Add at least one product to the order.");
+    return;
+  }
   if (order.order_status === "Shipped" && (!order.tracking_id || !order.tracking_link)) {
     toast("Tracking ID and link are required for shipped orders.");
     return;
