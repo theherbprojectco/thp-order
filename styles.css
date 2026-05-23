@@ -363,6 +363,12 @@ textarea {
   min-height: 40px;
 }
 
+input[readonly] {
+  background: var(--surface-soft);
+  color: var(--muted);
+  cursor: default;
+}
+
 textarea {
   min-height: 86px;
   resize: vertical;
@@ -376,6 +382,29 @@ textarea {
 
 .quick-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-add-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 96px auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.selected-products {
+  display: grid;
+  gap: 8px;
+}
+
+.product-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 40px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
 }
 
 .full {
@@ -524,6 +553,15 @@ td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .product-add-row {
+    grid-template-columns: 1fr 96px;
+  }
+
+  .product-add-row .btn {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
   .quick-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -583,6 +621,11 @@ td {
   .filters,
   .form-grid,
   .customer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-add-row,
+  .product-line {
     grid-template-columns: 1fr;
   }
 
