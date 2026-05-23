@@ -1255,7 +1255,7 @@ function blankOrder() {
 async function updateOrder(event) {
   event.preventDefault();
   const data = formObject(event.currentTarget);
-  if (data.order_status === "Shipped" && (!data.tracking_id) {
+  if (data.order_status === "Shipped" && (!data.tracking_id)) {
     toast("Tracking ID and link are required before marking shipped.");
     return;
   }
