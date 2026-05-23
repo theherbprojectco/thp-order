@@ -719,14 +719,6 @@ function addOrderView() {
 }
 
 function multiProductFieldRaw() {
-  const products = productOptions();
-  if (!products.length) {
-    return `
-      ${textFieldRaw("product", "Product ordered", "", true)}
-      ${textFieldRaw("quantity", "Quantity", "1", true)}
-      ${textFieldRaw("amount", "Order amount", "0", true)}
-    `;
-  }
   return `
     <div class="panel full product-picker" style="box-shadow:none">
       <div class="panel-head"><h2>Products ordered</h2></div>
@@ -755,7 +747,6 @@ function multiProductFieldRaw() {
 
 function productFieldRaw(current = "") {
   const products = productOptions();
-  if (!products.length) return textFieldRaw("productPicker", "Product ordered", current, true);
   return `
     <div class="field">
       <label for="productPicker">Product ordered</label>
@@ -777,7 +768,8 @@ function productNames() {
 }
 
 function productOptions() {
-  const fromProducts = (state.products || [])
+  const sourceProducts = (state.products || []).length ? state.products : seedProducts();
+  const fromProducts = sourceProducts
     .filter((product) => String(product.active || "Yes").toLowerCase() !== "no")
     .map((product) => ({
       name: product.product_name || product.name || product.product,
@@ -1010,8 +1002,10 @@ function exportView() {
           ${badge(backendEnabled() ? "Sheet sync ready" : "Local mode")}
           ${badge(`${(state.products || []).length} products`)}
           ${badge(`${state.orders.length} orders`)}
+          ${badge(`${customerRows().length} customers`)}
           ${badge(`${(state.expenses || []).length} expenses`)}
         </div>
+        <p class="muted">Customers are generated from the Orders sheet. If Orders sync as 0 rows, Customers will also be empty.</p>
         <div class="actions" style="justify-content:flex-start">
           <button class="btn" data-action="sync" ${backendEnabled() ? "" : "disabled"} type="button">Sync now</button>
         </div>
@@ -1326,10 +1320,13 @@ async function syncFromBackend() {
   render();
   try {
     const data = await apiGet("bootstrap");
-    state.orders = Array.isArray(data.orders) ? data.orders : state.orders;
-    state.products = Array.isArray(data.products) ? data.products : state.products;
-    state.expenses = Array.isArray(data.expenses) ? data.expenses : state.expenses;
-    state.syncStatus = `Synced ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    const backendOrders = Array.isArray(data.orders) ? data.orders : null;
+    const backendProducts = Array.isArray(data.products) ? data.products : null;
+    const backendExpenses = Array.isArray(data.expenses) ? data.expenses : null;
+    if (backendOrders && (backendOrders.length || !state.orders.length)) state.orders = backendOrders;
+    state.products = backendProducts ? backendProducts : state.products;
+    state.expenses = backendExpenses ? backendExpenses : state.expenses;
+    state.syncStatus = `Synced ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · ${backendOrders ? backendOrders.length : "?"} orders · ${backendProducts ? backendProducts.length : "?"} products · ${backendExpenses ? backendExpenses.length : "?"} expenses`;
     saveState();
     render();
   } catch (error) {
@@ -1362,7 +1359,9 @@ async function pushToBackend(action, payload, successMessage) {
 async function apiGet(action) {
   const response = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`);
   if (!response.ok) throw new Error("Backend request failed");
-  return response.json();
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
 
 async function apiPost(action, payload) {
@@ -1371,7 +1370,9 @@ async function apiPost(action, payload) {
     body: JSON.stringify({ action, ...payload }),
   });
   if (!response.ok) throw new Error("Backend save failed");
-  return response.json();
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
 
 if ("serviceWorker" in navigator) {
