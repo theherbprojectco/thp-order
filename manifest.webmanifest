@@ -1,0 +1,17 @@
+{
+  "name": "OrderFlow Small Business Orders",
+  "short_name": "OrderFlow",
+  "description": "Lightweight internal order and PR shipment management PWA.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f6f8f5",
+  "theme_color": "#176b4d",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
