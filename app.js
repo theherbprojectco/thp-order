@@ -281,7 +281,7 @@ function loginView() {
         <form id="loginForm" class="grid" style="margin-top: 18px">
           <div class="field">
             <label for="name">Name</label>
-            <input id="name" name="name" required value="Swathi" />
+            <input id="name" name="name" required value="Raunak" />
           </div>
           <div class="field">
             <label for="role">Role</label>
